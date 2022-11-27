@@ -1,0 +1,6 @@
+[submodule "yazi-json"]
+	path = yazi-json
+	url = https://github.com/oldjun/yazi-json.git
+[submodule "json"]
+	path = json
+	url = https://github.com/nlohmann/json.git
