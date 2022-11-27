@@ -92,7 +92,7 @@ nlohmann-json: 984 us (0.984000 ms)
 
 优化策略为:
 * 扫描串的std::string替换为std::string_view。
-* 所有JObject的传递均拒绝拷贝，使用移动。
+* JObject删除拷贝，只能移动。
 
 待优化点：
-* 由于 union 使用的 C++ 中的 `std::variant`，故会有一定的性能损失，但失去这点性能换来更多的安全也是可以的。
+* 由于 union 使用的 C++ 中的 `std::variant`，故会有一定的性能损失，但失去这点性能换来的安全我认为是完全值得的。
