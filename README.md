@@ -83,7 +83,7 @@ int main()
 }
 ```
 
-10轮下来取平均值：均在release(g++ -o3)环境下进行测试，测试数据为test.json (2512行json数据)
+10轮下来取平均值：均在release(g++ -o3)环境下进行测试，测试数据为 [test.json](test.json) (2512行json数据)
 ```
 yazi-json: 482 us (0.482000 ms)
 my-json: 518 us (0.518000 ms)
