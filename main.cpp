@@ -1,10 +1,13 @@
 #include "time.hpp"
 #include <iostream>
-#include <filesystem>
 #include <fstream>
 using namespace std;
 #include "nlohmann/json.hpp"
 using json_nl = nlohmann::json;
+
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 #include"json/json.h"
 using Value = Json::Value;
@@ -60,7 +63,24 @@ void testNlohmannJson()
     j = std::move(json_nl::parse(data));
   }
   //valid string
-  outPutValidJson(j.dump());
+  outPutValidJson(j.dump(4));
+}
+
+//测试rapidjson
+void testRapidJson(){
+  //get src string
+  auto data = getSourceString();
+  rapidjson::Document j;
+  //start bench
+  {
+    Timer t;
+    j.Parse(data.c_str());
+  }
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  j.Accept(writer);
+  //valid string
+  outPutValidJson(buffer.GetString());
 }
 
 //测试jsoncpp的表现
@@ -103,7 +123,7 @@ int main()
     testMyJson();
     testJsonCpp();
     testNlohmannJson();
+    testRapidJson();
     std::cout<<"-----------------------"<<std::endl;
   }
-
 }
