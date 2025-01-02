@@ -1,11 +1,9 @@
-#include "nanobench.h"
-#include "gtest/gtest.h"
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <string>
-#include <unordered_map>
-#include <vector>
+#include <gtest/gtest.h>
+#include "nanobench.h"
 using namespace std;
 
 #include "nlohmann/json.hpp"
@@ -21,89 +19,105 @@ using Reader = Json::Reader;
 
 #include "ejson/parser.h"
 
-// 用于调整测试和验证文件的路径
+// Paths for adjusting test and validation files
 #define BASE_DIR "../../"
 
-// 输出到valid.json文件方便查看验证是否解析正确
-void outPutValidJson(std::string const &src) {
-  auto ofs = ofstream(BASE_DIR "valid.json");
-  ofs << src;
+// To output to the valid.json file for easy verification of correct parsing
+void outPutValidJson(std::string const & src)
+{
+    auto ofs = ofstream(BASE_DIR "valid.json");
+    ofs << src;
 }
 
-// 获取用于测试的json数据
-std::string getSourceString() {
-  auto ifs = ifstream(BASE_DIR "test.json");
-  if (ifs) {
-    return string{istreambuf_iterator<char>(ifs), istreambuf_iterator<char>()};
-  }
-  return {};
+std::string getSourceString()
+{
+    if (auto ifs = ifstream(BASE_DIR "test.json"))
+    {
+        return string{istreambuf_iterator<char>(ifs), istreambuf_iterator<char>()};
+    }
+    return {};
 }
 
-void benchSomething(const char *description, const std::function<void()> &func,
-                    int times = 100) {
-  ankerl::nanobench::Bench().minEpochIterations(times).run(description, func);
+void benchSomething(const char * description, const std::function<void()> & func, int times = 100)
+{
+    ankerl::nanobench::Bench().minEpochIterations(times).run(description, func);
 }
 
-#define PARSER(v1) "Parse:" #v1
+#define PARSE(v1) "Parse:" #v1
 #define STRING(v1) "Stringify:" #v1
+#define FIND(v1) "FindMember:" #v1
 
-TEST(bench, json) {
-  // get src string
-  auto data = getSourceString();
+const char * s_json_key = "editor.suggest.showMethods";
 
-  {
+TEST(Bench, Json)
+{
     json_nl json;
-    benchSomething(PARSER(nlohmann),
-                   [&]() { json = std::move(json_nl::parse(data)); });
-    string out;
-    benchSomething(STRING(nlohmann), [&]() { out = std::move(json.dump()); });
-    outPutValidJson(out);
-  }
-
-  {
     Value j;
     Reader r;
-    benchSomething(PARSER(jsoncpp), [&]() { r.parse(data, j); });
-    string out;
-    benchSomething(STRING(jsoncpp),
-                   [&]() { out = std::move(j.toStyledString()); });
-    outPutValidJson(out);
-  }
-  bool status{};
-
-  {
-    rapidjson::Document json;
-    benchSomething(PARSER(rapid_json), [&]() { json.Parse(data.c_str()); });
-    string out;
-
-    benchSomething(STRING(rapid_json), [&]() {
-      rapidjson::StringBuffer buffer;
-      rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-      json.Accept(writer);
-      out = buffer.GetString();
-    });
-
-    ankerl::nanobench::doNotOptimizeAway(status);
-    benchSomething("FindMember:rapid_json", [&]() {
-      status = json.HasMember("editor.suggest.showMethods");
-    });
-    outPutValidJson(out);
-  }
-  EXPECT_EQ(status, true);
-
-  status = false;
-
-  {
-    ankerl::nanobench::doNotOptimizeAway(status);
-    ejson::JObject json;
-    benchSomething(PARSER(ejson),
-                   [&]() { json = ejson::Parser::FromJSON(data); });
-    string out;
-    benchSomething(STRING(ejson), [&]() { out = std::move(json.to_string()); });
-    benchSomething("FindMember:ejson", [&]() {
-      status = json.at("editor.suggest.showMethods").ref.type() != ejson::kNull;
-    });
-    outPutValidJson(out);
-  }
-  EXPECT_EQ(status, true);
+    rapidjson::Document json_doc;
+    ejson::JObject ejson;
+    // bench json parse
+    auto data = getSourceString();
+    ejson = std::move(ejson::Parser::FromJSON(data));
+    {
+        benchSomething(PARSE(nlohmann), [&]() { json = std::move(json_nl::parse(data)); });
+        benchSomething(PARSE(jsoncpp), [&]() { r.parse(data, j); });
+        benchSomething(PARSE(rapid_json), [&]() { json_doc.Parse(data.c_str()); });
+        benchSomething(PARSE(ejson), [&]() { ejson = std::move(ejson::Parser::FromJSON(data)); });
+    }
+    // bench json stringify
+    {
+        string out;
+        benchSomething(STRING(nlohmann), [&]() { out = std::move(json.dump()); });
+        benchSomething(
+            STRING(jsoncpp),
+            [&]()
+            {
+                Json::FastWriter writer;
+                writer.omitEndingLineFeed();
+                out = std::move(writer.write(j));
+            });
+        benchSomething(
+            STRING(rapid_json),
+            [&]()
+            {
+                rapidjson::StringBuffer buffer;
+                auto writer = rapidjson::Writer(buffer);
+                json_doc.Accept(writer);
+                EXPECT_TRUE(buffer.GetLength() > 72000);
+            });
+        benchSomething(STRING(ejson), [&]() { out = std::move(ejson.to_string(2)); });
+        outPutValidJson(out);
+    }
+    // bench find member
+    {
+        benchSomething(
+            FIND(nlohmann),
+            [&]()
+            {
+                auto it = json.find(s_json_key);
+                EXPECT_TRUE(it != json.end());
+            });
+        benchSomething(
+            FIND(jsoncpp),
+            [&]()
+            {
+                auto value = j.find(s_json_key);
+                EXPECT_NE(value, nullptr);
+            });
+        benchSomething(
+            FIND(rapid_json),
+            [&]()
+            {
+                auto status = json_doc.HasMember(s_json_key);
+                EXPECT_TRUE(status);
+            });
+        benchSomething(
+            FIND(ejson),
+            [&]()
+            {
+                auto status = ejson.has_key(s_json_key);
+                EXPECT_TRUE(status);
+            });
+    }
 }

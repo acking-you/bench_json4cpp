@@ -7,3 +7,6 @@
 [submodule "rapidjson"]
 	path = rapidjson
 	url = https://github.com/Tencent/rapidjson.git
+[submodule "sonic-cpp"]
+	path = sonic-cpp
+	url = https://github.com/bytedance/sonic-cpp.git

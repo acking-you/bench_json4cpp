@@ -1,7 +1,21 @@
 # bench_json4cpp
-在确保有cmake和make工具的情况下，在项目根目录运行下列命令即可开始测试。
+在确保 cmake/makefile/gcc or clang or msvc 都准备好的情况下，clone 项目后使用下面的命令进行一键 benchmar
 ```shell
-cmake -B build&&cd build&&make unittest&&cd bin&&./unittest
+cmake -DCMAKE_BUILD_TYPE=Release -B build && cmake --build build && ./build/benchmark/json_bench
 ```
-这是我本机的测试结果：
-![benchmar](https://camo.githubusercontent.com/38b343adf6771eae2cd762b37ca0cf1346b188ff53e10381216fc32d093966e1/68747470733a2f2f696d672d626c6f672e6373646e696d672e636e2f64373965356138643933306134336666616335633261343435666233653837392e706e67)
+M3Pro 的测试结果如下：
+
+|      ns/op |           op/s | err% | total | benchmark               |
+|-----------:|---------------:|-----:|------:|:------------------------|
+| 540,864.85 |       1,848.89 | 1.4% |  0.65 | `Parse:nlohmann`        |
+| 531,247.92 |       1,882.36 | 2.4% |  0.63 | `Parse:jsoncpp`         |
+| 132,624.60 |       7,540.08 | 0.4% |  0.16 | `Parse:rapid_json`      |
+| 117,324.28 |       8,523.39 | 0.9% |  0.14 | `Parse:ejson`           |
+| 206,299.31 |       4,847.33 | 1.1% |  0.25 | `Stringify:nlohmann`    |
+| 312,637.53 |       3,198.59 | 1.7% |  0.37 | `Stringify:jsoncpp`     |
+| 126,970.87 |       7,875.82 | 0.4% |  0.15 | `Stringify:rapid_json`  |
+|  74,202.38 |      13,476.66 | 0.7% |  0.09 | `Stringify:ejson`       |
+|      69.67 |  14,353,255.45 | 0.2% |  0.00 | `FindMember:nlohmann`   |
+|      48.09 |  20,795,755.97 | 0.4% |  0.00 | `FindMember:jsoncpp`    |
+|     230.74 |   4,333,791.62 | 0.3% |  0.00 | `FindMember:rapid_json` |
+|       9.55 | 104,759,643.92 | 0.1% |  0.00 | `FindMember:ejson`      |
