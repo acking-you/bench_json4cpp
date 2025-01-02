@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <gtest/gtest.h>
+#include <sonic/sonic.h>
 #include "nanobench.h"
 using namespace std;
 
@@ -55,6 +56,7 @@ TEST(Bench, Json)
     Value j;
     Reader r;
     rapidjson::Document json_doc;
+    sonic_json::Document sonic_json_doc;
     ejson::JObject ejson;
     // bench json parse
     auto data = getSourceString();
@@ -63,6 +65,7 @@ TEST(Bench, Json)
         benchSomething(PARSE(nlohmann), [&]() { json = std::move(json_nl::parse(data)); });
         benchSomething(PARSE(jsoncpp), [&]() { r.parse(data, j); });
         benchSomething(PARSE(rapid_json), [&]() { json_doc.Parse(data.c_str()); });
+        benchSomething(PARSE(sonic_json), [&]() { sonic_json_doc.Parse(data); });
         benchSomething(PARSE(ejson), [&]() { ejson = std::move(ejson::Parser::FromJSON(data)); });
     }
     // bench json stringify
@@ -85,6 +88,14 @@ TEST(Bench, Json)
                 auto writer = rapidjson::Writer(buffer);
                 json_doc.Accept(writer);
                 EXPECT_TRUE(buffer.GetLength() > 72000);
+            });
+        benchSomething(
+            STRING(sonic_json),
+            [&]()
+            {
+                sonic_json::WriteBuffer wb;
+                sonic_json_doc.Serialize(wb);
+                EXPECT_TRUE(wb.Size() > 72000);
             });
         benchSomething(STRING(ejson), [&]() { out = std::move(ejson.to_string(2)); });
         outPutValidJson(out);
@@ -110,6 +121,13 @@ TEST(Bench, Json)
             [&]()
             {
                 auto status = json_doc.HasMember(s_json_key);
+                EXPECT_TRUE(status);
+            });
+        benchSomething(
+            FIND(sonic_json),
+            [&]()
+            {
+                auto status = sonic_json_doc.HasMember(s_json_key);
                 EXPECT_TRUE(status);
             });
         benchSomething(

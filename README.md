@@ -5,17 +5,23 @@ cmake -DCMAKE_BUILD_TYPE=Release -B build && cmake --build build && ./build/benc
 ```
 M3Pro 的测试结果如下：
 
-|      ns/op |           op/s | err% | total | benchmark               |
-|-----------:|---------------:|-----:|------:|:------------------------|
-| 540,864.85 |       1,848.89 | 1.4% |  0.65 | `Parse:nlohmann`        |
-| 531,247.92 |       1,882.36 | 2.4% |  0.63 | `Parse:jsoncpp`         |
-| 132,624.60 |       7,540.08 | 0.4% |  0.16 | `Parse:rapid_json`      |
-| 117,324.28 |       8,523.39 | 0.9% |  0.14 | `Parse:ejson`           |
-| 206,299.31 |       4,847.33 | 1.1% |  0.25 | `Stringify:nlohmann`    |
-| 312,637.53 |       3,198.59 | 1.7% |  0.37 | `Stringify:jsoncpp`     |
-| 126,970.87 |       7,875.82 | 0.4% |  0.15 | `Stringify:rapid_json`  |
-|  74,202.38 |      13,476.66 | 0.7% |  0.09 | `Stringify:ejson`       |
-|      69.67 |  14,353,255.45 | 0.2% |  0.00 | `FindMember:nlohmann`   |
-|      48.09 |  20,795,755.97 | 0.4% |  0.00 | `FindMember:jsoncpp`    |
-|     230.74 |   4,333,791.62 | 0.3% |  0.00 | `FindMember:rapid_json` |
-|       9.55 | 104,759,643.92 | 0.1% |  0.00 | `FindMember:ejson`      |
+|      ns/op |          op/s | err% | total | benchmark               |
+|-----------:|--------------:|-----:|------:|:------------------------|
+| 547,240.60 |      1,827.35 | 3.3% |  0.65 | `Parse:nlohmann`        |
+| 537,145.30 |      1,861.69 | 0.8% |  0.64 | `Parse:jsoncpp`         |
+| 134,859.05 |      7,415.15 | 0.9% |  0.16 | `Parse:rapid_json`      |
+|  49,526.39 |     20,191.25 | 2.6% |  0.06 | `Parse:sonic_json`      |
+| 116,495.41 |      8,584.03 | 0.3% |  0.14 | `Parse:ejson`           |
+| 206,079.69 |      4,852.49 | 0.6% |  0.25 | `Stringify:nlohmann`    |
+| 320,726.38 |      3,117.92 | 0.2% |  0.38 | `Stringify:jsoncpp`     |
+| 131,007.98 |      7,633.12 | 0.5% |  0.15 | `Stringify:rapid_json`  |
+|  11,907.37 |     83,981.61 | 0.3% |  0.01 | `Stringify:sonic_json`  |
+|  76,992.07 |     12,988.35 | 0.9% |  0.09 | `Stringify:ejson`       |
+|      67.95 | 14,715,735.07 | 0.5% |  0.00 | `FindMember:nlohmann`   |
+|      57.35 | 17,436,791.63 | 1.2% |  0.00 | `FindMember:jsoncpp`    |
+|     254.65 |  3,926,892.95 | 1.8% |  0.00 | `FindMember:rapid_json` |
+|     242.82 |  4,118,239.22 | 2.0% |  0.00 | `FindMember:sonic_json` |
+|      10.74 | 93,138,367.92 | 0.1% |  0.00 | `FindMember:ejson`      |
+
+自 2025-01-02 加入了字节开源的 Sonic-Cpp 作为对比，发现其性能形成了成倍碾压。。。
+但 ejson4cpp 在简洁好用的同时确实达到了和 rapid-json 在同一个性能水平
